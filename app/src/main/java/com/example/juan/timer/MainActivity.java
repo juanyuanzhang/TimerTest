@@ -14,7 +14,7 @@ import android.widget.TextView;
 
 import java.util.Timer;
 import java.util.TimerTask;
-
+//設定三個timer分別控制暖身、休息、動作三個時間倒數，宣告一個
 public class MainActivity extends AppCompatActivity  implements View.OnClickListener{
     Button btnstart,btnstop,btnreset;
     TextView tvshow,timeTv;
@@ -24,14 +24,14 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
     private Timer timer = null , timer1 =null , timer2 =null ;
     private boolean one = true;
     private boolean start = true;
-    private boolean p = true;
+    private boolean first = true;
 
     private TimerTask timerTask = null;
     private TimerTask timerTask1 =null;
     private TimerTask timerTask2 =null;
 
-    private SoundPool soundPool;
-    private int[] soundID = new int[1];
+    private SoundPool soundPool; //SoundPool類別設定音效用
+    private int[] soundID = new int[1];//宣告整數陣列放音效ID
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,8 +41,9 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         rest = Integer.valueOf(etrest.getText().toString());
         work =Integer.valueOf(etwork.getText().toString());
         times = Integer.valueOf(ettimes.getText().toString());
-        soundPool =new SoundPool(5, AudioManager.STREAM_MUSIC,0);//設定音效
-        soundID[0]=soundPool.load(this,R.raw.glass,1); //設定音效ID
+
+        soundPool =new SoundPool(5, AudioManager.STREAM_MUSIC,0);//使用SoundPool類別設定音效，參數(最大串流音效數,串流類型,取樣值轉換(設定為0預設值即可))
+        soundID[0]=soundPool.load(this,R.raw.glass,1); //將音效放在res/raw目錄 ，使用音效必須先LOAD來設定音效ID
 
     }
     public void findView(){
@@ -70,8 +71,8 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         switch (view.getId()){
             case R.id.btnstart:
                 if(start) { //判斷是否是是在開始狀態，不是為true，是為false，避免發生按下兩次開始發生BUG
-                    if(p) {//數值初始化
-                        hot = Integer.valueOf(ethot.getText().toString()); //讀取數值
+                    if(first) {//數值初始化
+                        hot = Integer.valueOf(ethot.getText().toString()); //讀取用戶設定在textview上的數值
                         rest = Integer.valueOf(etrest.getText().toString());
                         work = Integer.valueOf(etwork.getText().toString());
                         times = Integer.valueOf(ettimes.getText().toString());
@@ -79,48 +80,49 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                         r=rest+1;
                         w=work+1;
                         t=times;
-                        one=true; //第一循環才執行暖身判斷
+                        one=true; // 循環才執行暖身判斷
                     }
                     start=false;//按下開始後判定為開始狀態所以為false
-                    startTime();
+                    //btnstart.setText("暫停");
+                    startTime(); //使用開始方法
                 }
 
                 break;
             case R.id.btnstop:
-                stopTime();
+                stopTime(); //使用暫停方法
                 break;
             case R.id.btnreset:
-                restTime();
+                restTime(); //使用重置方法
                 break;
 
 
     }
 
     }
-    @SuppressLint("HandlerLeak")
-    private Handler mHandler = new Handler(){
+        private Handler mHandler = new Handler(){
       public  void handleMessage(Message msg){
-          //利用Handler更新主UI (時間表)
+          //利用Handler更新主UI (時間表) 傳送時間值改變TextView的數值
           //String time=String.valueOf(msg.arg1);
           tvshow.setText(msg. arg1+ "");//TextView只能承载字符串类型的操作
-          startTime();
+          startTime();//重複執行startTime()方法
       }
     };
 
     public void startTime(){
 
-        timer = new Timer();
+        //java.util.Timer定时器，實際上是個Thread
+        timer = new Timer(); //宣告新的Timer
         timer1 = new Timer();
         timer2 = new Timer();
-
+        //TimerTask實際上就是一個擁有run方法的類別，需要定時執行的代碼放到run方法內
         timerTask =new TimerTask() {
 
             @Override
             public void run() {
-                h--;
+                h--; //暖身時間-1
                 Message message= mHandler.obtainMessage();
-                message. arg1= h;                 //arg1和arg2都是Message自帶的用來傳遞一些輕量級存儲int類型的數據，比如進度條的數據等。
-                mHandler.sendMessage(message);    // 通過這個數據是通過Bundle的方式來轉載的，讀者可以自己查閱源代碼研究
+                message. arg1= h;             //傳送暖身時間給handler    //arg1和arg2都是Message自帶的用來傳遞一些輕量級存儲int類型的數據，比如進度條的數據等。
+                mHandler.sendMessage(message);    //傳送訊息
 
 
             }
@@ -149,57 +151,57 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         };
     //启动Timer(以秒为单位的倒计时)
         if(one) {
-            if(h==hot)timeTv.setText("暖身");
-            timer.schedule(timerTask,1000); //timer 去執行TimerTask的run每一秒執行一次
+            if(h==hot)timeTv.setText("暖身");//顯示暖身兩字
+            timer.schedule(timerTask,1000); // timer 去執行TimerTask的run一秒後執行
         }
-        if(h==0) {
-            if(r==(rest+1) )
+        if(h==0) { //當暖身秒數=0時執行
+            if(r==(rest+1) )//當休息時間=rest+1時產生音效
                 soundPool.play(soundID[0], 1.0f, 1.0f, 0, 0, 1.0f); //播放音效
-
+                //play()的參數(逾放的音效ID,左聲道音量(0.0~1.0f),右聲道音量(0.0~1.0f),優先撥放順序,是否重複,取樣值)
             timer.cancel();
-            one=false;
+            one=false;//暖身只跑一次，所以跑完一次後,one設為false
             timer1.schedule(timerTask1, 1000);
-            if(r==rest)timeTv.setText("休息");
+            if(r==rest)timeTv.setText("休息");//顯示休息兩字
             if(r==0) {
                 timer1.cancel();
-                if(w==(work+1) )
+                if(w==(work+1) )//當動作時間=work+1時產生音效
                     soundPool.play(soundID[0], 1.0f, 1.0f, 0, 0, 1.0f);
                 timer2.schedule(timerTask2, 1000);
-                if(w==work)timeTv.setText("訓練");
-                if(w==0) {
+                if(w==work)timeTv.setText("訓練");//顯示訓練兩字
+                if(w==0) {  //當動作時間結束
                     timer2.cancel();
-                    r = rest+1;
+                    r = rest+1;   //再將休息、動作時間重新計算
                     w = work+1;
-                    t--;
-                    if(t!=0) startTime();
-                    if(t==0)
+                    t--; //跑完一次，次數就減一
+                    if(t!=0) startTime();//次數還沒等於零就重新執行startTime
+                    if(t==0) // 循環次數結束，想起最後一鈴聲
                     {
                         soundPool.play(soundID[0], 1.0f, 1.0f, 0, 0, 1.0f);
                         start=true;
-                        p=true;
+                        first=true;
                     }
                 }
             }
         }
 
     }
-    public void stopTime(){
+    public void stopTime(){//暫停 暫時將timer取消，將判定是否為開始狀態的start設為ture代表現在不是開始狀態
         timer.cancel();
         timer1.cancel();
         timer2.cancel();
-        start= true;
-        p =false ;
+        start = true;
+        first = false ;
 
 
     }
-    public void restTime(){
+    public void restTime(){//重置 將所有timer取消，所有判斷設定回歸初值
         timer.cancel();
         timer1.cancel();
         timer2.cancel();
         tvshow.setText("00");
-        p=true;
-        one=true;
-        start=true;
+        first = true;
+        one = true;
+        start = true;
         timeTv.setText(" ");
 
     }
