@@ -1,6 +1,5 @@
 package com.example.juan.timer;
 
-import android.annotation.SuppressLint;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Handler;
@@ -26,9 +25,9 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
     private boolean start = true;
     private boolean first = true;
 
-    private TimerTask timerTask = null;
-    private TimerTask timerTask1 =null;
-    private TimerTask timerTask2 =null;
+    public TimerTask timerTask = null;
+    public TimerTask timerTask1 =null;
+    public TimerTask timerTask2 =null;
 
     private SoundPool soundPool; //SoundPool類別設定音效用
     private int[] soundID = new int[1];//宣告整數陣列放音效ID
@@ -98,15 +97,24 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
     }
 
-    }
-        private Handler mHandler = new Handler(){
-      public  void handleMessage(Message msg){
-          //利用Handler更新主UI (時間表) 傳送時間值改變TextView的數值
-          //String time=String.valueOf(msg.arg1);
-          tvshow.setText(msg. arg1+ "");//TextView只能承载字符串类型的操作
-          startTime();//重複執行startTime()方法
-      }
-    };
+    }  //利用Hendler改變TextView秒數
+        private Handler mHandler = new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message message) {
+                String time = String.valueOf(message.arg1);
+                tvshow.setText(time);//TextView只能承载字符串类型的操作
+                startTime();//重複執行startTime()方法
+                return false;
+            }
+        });
+
+//      public  void handleMessage(Message msg){
+//          //利用Handler更新主UI (時間表) 傳送時間值改變TextView的數值
+//          //String time=String.valueOf(msg.arg1);
+//          tvshow.setText(msg. arg1+ "");//TextView只能承载字符串类型的操作
+//          startTime();//重複執行startTime()方法
+//      }
+
 
     public void startTime(){
 
@@ -198,7 +206,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         timer.cancel();
         timer1.cancel();
         timer2.cancel();
-        tvshow.setText("00");
+        tvshow.setText("0");
         first = true;
         one = true;
         start = true;
